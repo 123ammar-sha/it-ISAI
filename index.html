@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>it-IS AI - Pmecah Misteri Citra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cyber-glow-real { box-shadow: 0 0 25px rgba(16, 185, 129, 0.35); border-color: rgba(16, 185, 129, 0.6); }
+        .cyber-glow-ai { box-shadow: 0 0 25px rgba(244, 63, 94, 0.35); border-color: rgba(244, 63, 94, 0.6); }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        .laser-line {
+            animation: scan 2.5s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-blue-500 selection:text-white">
+
+    <!-- TOPBAR HUD -->
+    <header class="border-b border-slate-800 bg-slate-900/40 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-mono">
+                    it-IS AI <span class="text-xs font-bold px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">DEMO</span>
+                </h1>
+                <p class="text-xs text-slate-500 font-mono mt-0.5">MATRIX LAYER: MOBILENETV2</p>
+            </div>
+            <div class="flex p-1 bg-slate-900 border border-slate-800 rounded-xl">
+                <button id="btnTabUpload" onclick="switchTab('upload')" class="px-5 py-2 text-xs font-mono uppercase tracking-wider rounded-lg bg-blue-600 text-white shadow font-bold transition-all">Static File</button>
+                <button id="btnTabLive" onclick="switchTab('live')" class="px-5 py-2 text-xs font-mono uppercase tracking-wider rounded-lg text-slate-400 hover:text-white font-bold transition-all">Live Cam HUD</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- MODULE 1: STATIC UPLOAD -->
+        <section id="secUpload" class="max-w-xl mx-auto space-y-6">
+            <div class="bg-slate-900/60 border border-slate-800 p-8 rounded-2xl backdrop-blur-md relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl"></div>
+                <h3 class="text-base font-mono uppercase tracking-wider text-blue-400 mb-1">■ Static Image Analysis</h3>
+                <p class="text-xs text-slate-400 mb-4">Metode ekstraksi fitur berbasis komparasi spasial tunggal.</p>
+                
+                <!-- PREVIEW CONTAINER -->
+                <div id="previewContainer" class="hidden w-full mb-4 bg-slate-950 border border-slate-800 rounded-xl p-2 flex justify-center items-center">
+                    <img id="imgUploadPreview" class="max-h-64 rounded-lg object-contain" alt="Preview Gambar">
+                </div>
+
+                <div class="border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-6 mb-6 transition-all text-center bg-slate-950/40 group">
+                    <input type="file" id="fileInput" onchange="previewStaticImage(event)" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+                <button onclick="uploadImage()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-xs font-mono uppercase tracking-widest font-bold rounded-xl shadow-lg shadow-blue-950/50 transition-all active:scale-[0.99]">
+                    EXECUTE MATRIX EXTRACTION
+                </button>
+            </div>
+        </section>
+
+        <!-- MODULE 2: LIVE WEBCAM HUD REVOLUTION -->
+        <section id="secLive" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            
+            <!-- LAYAR UTAMA WEBCAM (KIRI-TENGAH) -->
+            <div class="lg:col-span-2 bg-slate-900/40 border border-slate-800 p-5 rounded-2xl backdrop-blur-md flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-3">
+                        <span class="text-xs font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> RAW WEBCAM CAPTURE
+                        </span>
+                        <span class="text-[10px] font-mono text-slate-500">FEED: 300x300px BUFFER</span>
+                    </div>
+                    
+                    <!-- CONTAINER CAMERA DENGAN HUD LAYER -->
+                    <div class="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800 shadow-inner">
+                        <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1]"></video>
+                        <canvas id="canvasCapture" class="hidden"></canvas>
+                        
+                        <!-- HUD CYBERPUNK OVERLAY -->
+                        <div class="absolute inset-0 border-[20px] border-slate-950/40 pointer-events-none flex items-center justify-center">
+                            <!-- Kotak Target Wajah -->
+                            <div id="hudBox" class="w-56 h-56 border border-blue-500/30 relative transition-all duration-300">
+                                <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-blue-400 -mt-0.5 -ml-0.5"></div>
+                                <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-blue-400 -mt-0.5 -mr-0.5"></div>
+                                <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-blue-400 -mb-0.5 -ml-0.5"></div>
+                                <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-blue-400 -mb-0.5 -mr-0.5"></div>
+                                <div id="laser" class="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent laser-line shadow-[0_0_8px_rgba(96,165,250,0.8)]"></div>
+                            </div>
+                        </div>
+
+                        <!-- Badge Status Mengambang -->
+                        <div id="liveBadge" class="absolute top-6 left-6 bg-slate-950/80 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider text-slate-400 flex items-center gap-2 shadow-lg">
+                            SYSTEM OFFLINE
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="btnStartCam" onclick="startWebcam()" class="py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-mono uppercase tracking-wider rounded-xl font-bold transition-all">CONNECT CAMERA</button>
+                    <button id="btnStopCam" onclick="stopWebcam()" disabled class="py-2.5 bg-slate-900 text-slate-600 border border-slate-800 text-xs font-mono uppercase tracking-wider rounded-xl font-bold cursor-not-allowed transition-all">DISCONNECT</button>
+                </div>
+            </div>
+
+            <!-- SIDE MONITOR: HASIL KEPUTUSAN LIVE & FILTER STREAM (KANAN) -->
+            <div class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl backdrop-blur-md flex flex-col justify-between space-y-4">
+                <div class="space-y-4">
+                    <!-- REVISI: PANEL HASIL KEPUTUSAN DITARUH DI SAMPING KAMERA -->
+                    <div id="sideDecisionCard" class="p-4 rounded-xl border border-slate-800 bg-slate-950/80 text-center transition-all duration-300">
+                        <span class="text-[9px] font-mono uppercase tracking-widest text-slate-500 block mb-1">LIVE HUD KERNEL OUTPUT</span>
+                        <h2 id="sideTxtPrediction" class="text-3xl font-black font-mono text-slate-400 tracking-wide">STANDBY</h2>
+                        <span id="sideTxtProbability" class="text-[10px] font-mono text-slate-500 block mt-1">Sigmoid Vector: 0.000000</span>
+                    </div>
+
+                    <div class="border-b border-slate-800 pb-2">
+                        <h4 class="text-xs font-mono text-blue-400 uppercase tracking-widest">■ Real-time Edge Stream</h4>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
+                            <span class="text-[9px] font-mono text-slate-500 block mb-1">SOBEL EDGE</span>
+                            <img id="sideSobel" class="w-full aspect-square rounded bg-slate-900 object-cover" src="" alt="Waiting...">
+                        </div>
+                        <div class="bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
+                            <span class="text-[9px] font-mono text-slate-500 block mb-1">LAPLACIAN</span>
+                            <img id="sideLaplace" class="w-full aspect-square rounded bg-slate-900 object-cover" src="" alt="Waiting...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
+                    <span class="text-[10px] font-mono text-slate-400 block font-bold mb-1">INFO DEKOMPOSISI CYBER:</span>
+                    <p class="text-[10px] text-slate-500 leading-relaxed font-mono">Laplace memetakan kebocoran noise frekuensi tinggi piksel artifisial, sedangkan Sobel melacak inkonsistensi ketajaman geometris rahang.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- OUTPUT DASHBOARD DISPLAY (BAHWA COMPONENT / DEEP MATRIX GRAPH) -->
+        <section id="outputSection" class="hidden space-y-8 mt-10">
+            <!-- PANEL KEPUTUSAN BAWAH (UNTUK MODE STATIC UPLOAD) -->
+            <div id="cardDecision" class="max-w-3xl mx-auto p-8 rounded-2xl text-center border transition-all duration-300 bg-slate-900/20">
+                <h2 class="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold mb-1">KERNEL CLASSIFICATION DECISION (STATIC FILE)</h2>
+                <h1 id="txtPrediction" class="text-5xl font-black tracking-tight font-mono">STANDBY</h1>
+                <p id="txtProbability" class="text-xs font-mono mt-3 text-slate-400">Sigmoid Layer Output: 0.0000</p>
+            </div>
+
+            <!-- PIPELINE ANALISIS BAWAH -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-mono uppercase tracking-widest text-slate-400">■ Deep Feature Decomposition Graph</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- RGB DECOMPOSITION -->
+                    <div class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl space-y-3">
+                        <h4 class="font-mono font-bold text-xs text-blue-400 uppercase tracking-wider">01 // Kroma RGB Matrix</h4>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">Pemisahan matriks warna primer untuk mendeteksi deviasi distribusi saturasi piksel.</p>
+                        <div class="flex gap-2 justify-center pt-2">
+                            <div class="text-center w-[31%]"><img id="imgR" class="rounded border border-red-900 bg-black" alt="R"><span class="text-[9px] font-mono text-red-500 mt-1 block">R-CH</span></div>
+                            <div class="text-center w-[31%]"><img id="imgG" class="rounded border border-emerald-900 bg-black" alt="G"><span class="text-[9px] font-mono text-emerald-500 mt-1 block">G-CH</span></div>
+                            <div class="text-center w-[31%]"><img id="imgB" class="rounded border border-blue-900 bg-black" alt="B"><span class="text-[9px] font-mono text-blue-500 mt-1 block">B-CH</span></div>
+                        </div>
+                    </div>
+                    <!-- MATRIX PRE-PROCESSING VISUAL -->
+                    <div class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl space-y-3">
+                        <h4 class="font-mono font-bold text-xs text-blue-400 uppercase tracking-wider">02 // Spatial Kernel</h4>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">Peta visual filter spasial resolusi penuh dari data frame input yang sedang aktif diproses.</p>
+                        <div class="flex gap-3 justify-center pt-2">
+                            <div class="text-center w-[46%]"><img id="imgSobel" class="rounded bg-black border border-slate-800" alt="Sobel"><span class="text-[9px] font-mono text-slate-500 block mt-1">Sobel X</span></div>
+                            <div class="text-center w-[46%]"><img id="imgLaplace" class="rounded bg-black border border-slate-800" alt="Laplacian"><span class="text-[9px] font-mono text-slate-500 block mt-1">Laplacian</span></div>
+                        </div>
+                    </div>
+                    <!-- SIGMOID RADAR METER -->
+                    <div class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl space-y-3 flex flex-col justify-between">
+                        <div>
+                            <h4 class="font-mono font-bold text-xs text-blue-400 uppercase tracking-wider">03 // Sigmoid Vector Mapping</h4>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">Nilai akhir dipetakan secara absolut ke range 0.0 (Akurasi AI Penuh) hingga 1.0 (Akurasi Real Mutlak).</p>
+                        </div>
+                        <div class="pb-2">
+                            <div id="txtZone" class="text-[10px] font-mono uppercase font-bold text-center mb-1 text-slate-500">ZONA AMBANG BATAS</div>
+                            <div class="w-full h-2.5 bg-gradient-to-r from-rose-500 via-slate-800 to-emerald-500 rounded-full relative">
+                                <div id="sliderPointer" class="w-3.5 h-3.5 bg-white border-2 border-slate-950 rounded-full absolute -top-0.5 transition-all duration-200 shadow-lg" style="left: 50%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] font-mono text-slate-500 mt-1.5"><span>0.0 (AI)</span><span>0.5 (THRESHOLD)</span><span>1.0 (REAL)</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let streamInstance = null;
+        let liveLoopId = null;
+        let currentActiveTab = "upload";
+        const API_URL = "http://127.0.0.1:8000/predict"; 
+
+        function switchTab(tab) {
+            currentActiveTab = tab;
+            document.getElementById('secUpload').classList.toggle('hidden', tab !== 'upload');
+            document.getElementById('secLive').classList.toggle('hidden', tab !== 'live');
+            document.getElementById('btnTabUpload').className = tab === 'upload' ? 'px-5 py-2 text-xs font-mono uppercase tracking-wider rounded-lg bg-blue-600 text-white shadow font-bold' : 'px-5 py-2 text-xs font-mono uppercase tracking-wider rounded-lg text-slate-400 hover:text-white font-bold';
+            document.getElementById('btnTabLive').className = tab === 'live' ? 'px-5 py-2 text-xs font-mono uppercase tracking-wider rounded-lg bg-blue-600 text-white shadow font-bold' : 'px-5 py-2 text-xs font-mono uppercase tracking-wider rounded-lg text-slate-400 hover:text-white font-bold';
+            
+            // Sembunyikan output bawah jika pindah tab agar rapi
+            document.getElementById('outputSection').classList.add('hidden');
+            if(tab !== 'live') {
+                stopWebcam();
+                resetSideDecisionCard();
+            }
+        }
+
+        function previewStaticImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imgUploadPreview').src = e.target.result;
+                    document.getElementById('previewContainer').classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+                document.getElementById('outputSection').classList.add('hidden');
+            }
+        }
+
+        function resetSideDecisionCard() {
+            const sideCard = document.getElementById('sideDecisionCard');
+            document.getElementById('sideTxtPrediction').innerText = "STANDBY";
+            document.getElementById('sideTxtPrediction').className = "text-xl font-black font-mono text-slate-500 tracking-wide";
+            document.getElementById('sideTxtProbability').innerText = "Sigmoid Vector: 0.000000";
+            sideCard.className = "p-4 rounded-xl border border-slate-800 bg-slate-950/80 text-center transition-all duration-300";
+        }
+
+        async function updateDashboard(data) {
+            // 1. UPDATE KEPUTUSAN UNTUK SISI SAMPING LIVE CAM (KHUSUS MODE WEBCAM)
+            if (currentActiveTab === "live") {
+                const sideCard = document.getElementById('sideDecisionCard');
+                const sidePred = document.getElementById('sideTxtPrediction');
+                const sideProb = document.getElementById('sideTxtProbability');
+                
+                sidePred.innerText = data.prediction;
+                sideProb.innerText = `Sigmoid Vector: ${data.probability.toFixed(6)}`;
+                
+                if (data.prediction === "REAL") {
+                    sideCard.className = "p-4 rounded-xl border text-emerald-400 bg-emerald-950/30 border-emerald-500/50 text-center shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all duration-200";
+                    sidePred.className = "text-3xl font-black font-mono text-emerald-400 tracking-wide";
+                } else {
+                    sideCard.className = "p-4 rounded-xl border text-rose-400 bg-rose-950/30 border-rose-500/50 text-center shadow-[0_0_15px_rgba(244,63,94,0.2)] transition-all duration-200";
+                    sidePred.className = "text-3xl font-black font-mono text-rose-400 tracking-wide";
+                }
+            }
+
+            // 2. UPDATE GRAPH GLOBAL DI BAGIAN BAWAH PANEL
+            document.getElementById('outputSection').classList.remove('hidden');
+            const card = document.getElementById('cardDecision');
+            const txtPred = document.getElementById('txtPrediction');
+            const txtProb = document.getElementById('txtProbability');
+            const txtZone = document.getElementById('txtZone');
+            const pointer = document.getElementById('sliderPointer');
+            const hudBox = document.getElementById('hudBox');
+            const laser = document.getElementById('laser');
+
+            txtPred.innerText = data.prediction;
+            txtProb.innerText = `Sigmoid Probability Vector: ${data.probability.toFixed(6)}`;
+            pointer.style.left = `${data.probability * 100}%`;
+
+            if(data.prediction === "REAL") {
+                card.className = "max-w-3xl mx-auto p-8 rounded-2xl text-center border text-emerald-400 bg-emerald-950/20 cyber-glow-real";
+                txtZone.innerText = "VERIFIED CORE: REAL HUMAN CLASS";
+                txtZone.className = "text-[10px] font-mono uppercase font-bold text-center mb-1 text-emerald-400";
+                if(hudBox && laser) {
+                    hudBox.className = "w-56 h-56 border border-emerald-500/50 relative transition-all duration-300";
+                    laser.className = "absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent laser-line shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+                }
+            } else {
+                card.className = "max-w-3xl mx-auto p-8 rounded-2xl text-center border text-rose-400 bg-rose-950/20 cyber-glow-ai";
+                txtZone.innerText = "COUNTER-SPOOF: REPLICANT/AI ATTACK DETECTED";
+                txtZone.className = "text-[10px] font-mono uppercase font-bold text-center mb-1 text-rose-400";
+                if(hudBox && laser) {
+                    hudBox.className = "w-56 h-56 border border-rose-500/50 relative transition-all duration-300";
+                    laser.className = "absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-400 to-transparent laser-line shadow-[0_0_8px_rgba(244,63,94,0.8)]";
+                }
+            }
+
+            // Isi asset gambar matriks biner
+            document.getElementById('imgR').src = data.visual_steps.channel_r;
+            document.getElementById('imgG').src = data.visual_steps.channel_g;
+            document.getElementById('imgB').src = data.visual_steps.channel_b;
+            document.getElementById('imgOriginal').src = data.visual_steps.original;
+            document.getElementById('imgSobel').src = data.visual_steps.filter_sobel;
+            document.getElementById('imgLaplace').src = data.visual_steps.filter_laplacian;
+
+            // Update monitor mini kanan (khusus live webcam)
+            const sideS = document.getElementById('sideSobel');
+            const sideL = document.getElementById('sideLaplace');
+            if(sideS && sideL) {
+                sideS.src = data.visual_steps.filter_sobel;
+                sideL.src = data.visual_steps.filter_laplacian;
+            }
+        }
+
+        async function uploadImage() {
+            const file = document.getElementById('fileInput').files[0];
+            if(!file) return alert("Suntikkan berkas citra terlebih dahulu!");
+            const formData = new FormData();
+            formData.append("file", file);
+            const res = await fetch(API_URL, { method: "POST", body: formData });
+            const data = await res.json();
+            updateDashboard(data);
+        }
+
+        async function startWebcam() {
+            try {
+                streamInstance = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                const video = document.getElementById('webcam');
+                video.srcObject = streamInstance;
+                
+                document.getElementById('btnStartCam').disabled = true;
+                document.getElementById('btnStartCam').className = "py-2.5 bg-slate-900 text-slate-600 border border-slate-800 text-xs font-mono uppercase tracking-wider rounded-xl font-bold cursor-not-allowed";
+                document.getElementById('btnStopCam').disabled = false;
+                document.getElementById('btnStopCam').className = "py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-xs font-mono uppercase tracking-wider rounded-xl font-bold transition-all";
+                
+                const badge = document.getElementById('liveBadge');
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> HUD SYSTEM ACTIVE`;
+                badge.className = "absolute top-6 left-6 bg-slate-950/90 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider text-emerald-400 flex items-center gap-2 shadow-lg";
+
+                liveLoopId = setInterval(captureFrameAndPredict, 400); 
+            } catch (err) {
+                alert("Modul kamera gagal diinisialisasi: " + err);
+            }
+        }
+
+        function stopWebcam() {
+            if(liveLoopId) clearInterval(liveLoopId);
+            if(streamInstance) { streamInstance.getTracks().forEach(track => track.stop()); }
+            document.getElementById('webcam').srcObject = null;
+            document.getElementById('btnStartCam').disabled = false;
+            document.getElementById('btnStartCam').className = "py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-mono uppercase tracking-wider rounded-xl font-bold transition-all";
+            document.getElementById('btnStopCam').disabled = true;
+            document.getElementById('btnStopCam').className = "py-2.5 bg-slate-900 text-slate-600 border border-slate-800 text-xs font-mono uppercase tracking-wider rounded-xl font-bold cursor-not-allowed";
+            
+            const badge = document.getElementById('liveBadge');
+            badge.innerText = "SYSTEM OFFLINE";
+            badge.className = "absolute top-6 left-6 bg-slate-950/80 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider text-slate-400 flex items-center gap-2 shadow-lg";
+            
+            document.getElementById('outputSection').classList.add('hidden');
+            resetSideDecisionCard();
+        }
+
+        async function captureFrameAndPredict() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('canvasCapture');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 300;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append("file", blob, "live_hud_frame.png");
+                try {
+                    const res = await fetch(API_URL, { method: "POST", body: formData });
+                    const data = await res.json();
+                    updateDashboard(data);
+                } catch(e) { console.error("HUD Sync Error"); }
+            }, "image/png");
+        }
+    </script>
+</body>
+<img id="imgOriginal" class="hidden" alt="core-data">
+</html>
